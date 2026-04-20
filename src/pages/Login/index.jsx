@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
@@ -10,8 +10,14 @@ const Login = () => {
   const [password, setPassword] = useState('')
   const [localError, setLocalError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login, error } = useAuth()
+  const { user, isAdmin, login, error } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      navigate('/reading', { replace: true })
+    }
+  }, [isAdmin, navigate, user])
 
   const submit = async (e) => {
     e.preventDefault()

@@ -13,36 +13,14 @@ import {
 } from 'firebase/firestore'
 import { db } from './config'
 import { getAuth } from 'firebase/auth'
-// import { agentLog } from '../debug/instrument.js'
 
 const FAIL_MSG = 'Failed to save. Please try again.'
 
 const ensureAdminWrite = async () => {
   const auth = getAuth()
   const uid = auth.currentUser?.uid
-  // #region agent log
-  // agentLog({
-  //   runId: 'run1',
-  //   hypothesisId: 'H4',
-  //   location: 'src/firebase/firestore.js:24',
-  //   message: 'ensureAdminWrite entry',
-  //   data: { hasUid: Boolean(uid) },
-  // })
-  // #endregion
   if (!uid) throw new Error('Access Denied')
   const userSnap = await getDoc(doc(db, 'users', uid))
-  // #region agent log
-  // agentLog({
-  //   runId: 'run1',
-  //   hypothesisId: 'H4',
-  //   location: 'src/firebase/firestore.js:35',
-  //   message: 'ensureAdminWrite role check',
-  //   data: {
-  //     docExists: userSnap.exists(),
-  //     role: userSnap.exists() ? (userSnap.data().role || 'none') : 'none',
-  //   },
-  // })
-  // #endregion
   if (!userSnap.exists() || userSnap.data().role !== 'admin') throw new Error('Access Denied')
 }
 
@@ -62,6 +40,11 @@ const ensureWrite = async (ref, expectedData = null) => {
 const ensureDelete = async (ref) => {
   const snap = await getDoc(ref)
   if (snap.exists()) throw new Error(FAIL_MSG)
+}
+
+const ensureQueryEmpty = async (queryRef) => {
+  const snap = await getDocs(queryRef)
+  if (!snap.empty) throw new Error(FAIL_MSG)
 }
 
 export const getPassages = async (type) => {
@@ -93,6 +76,7 @@ export const deletePassage = async (id) => {
   await Promise.all(qs.docs.map((d) => deleteDoc(doc(db, 'questions', d.id))))
   await deleteDoc(ref)
   await ensureDelete(ref)
+  await ensureQueryEmpty(q)
 }
 
 export const getQuestions = async (passageId) => {
@@ -145,10 +129,13 @@ export const updateVocabList = async (id, data) => {
 export const deleteVocabList = async (id) => {
   await ensureAdminWrite()
   const ref = doc(db, 'vocabularyLists', id)
-  const wordsSnap = await getDocs(collection(db, 'vocabularyLists', id, 'words'))
+  const wordsCollection = collection(db, 'vocabularyLists', id, 'words')
+  const wordsSnap = await getDocs(wordsCollection)
   await Promise.all(wordsSnap.docs.map((d) => deleteDoc(doc(db, 'vocabularyLists', id, 'words', d.id))))
   await deleteDoc(ref)
   await ensureDelete(ref)
+  const remainingWords = await getDocs(wordsCollection)
+  if (!remainingWords.empty) throw new Error(FAIL_MSG)
 }
 
 export const getWords = async (listId) => {

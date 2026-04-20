@@ -1,25 +1,17 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import Layout from '../components/layout/Layout'
-import Dashboard from '../pages/Dashboard'
-import Listening from '../pages/Listening'
-import Login from '../pages/Login'
-import Reading from '../pages/Reading'
-import Students from '../pages/Students'
-import Vocabulary from '../pages/Vocabulary'
 import { useAuth } from '../hooks/useAuth'
-// import { agentLog } from '../debug/instrument.js'
+
+const Layout = lazy(() => import('../components/layout/Layout'))
+const Dashboard = lazy(() => import('../pages/Dashboard'))
+const Listening = lazy(() => import('../pages/Listening'))
+const Login = lazy(() => import('../pages/Login'))
+const Reading = lazy(() => import('../pages/Reading'))
+const Students = lazy(() => import('../pages/Students'))
+const Vocabulary = lazy(() => import('../pages/Vocabulary'))
 
 const ProtectedRoute = ({ children }) => {
   const { user, isAdmin, loading } = useAuth()
-  // #region agent log
-  // agentLog({
-  //   runId: 'run1',
-  //   hypothesisId: 'H2',
-  //   location: 'src/router/index.jsx:15',
-  //   message: 'protected route state',
-  //   data: { loading, hasUser: Boolean(user), isAdmin },
-  // })
-  // #endregion
   if (loading) return <div style={{ padding: 24 }}>Loading...</div>
   if (!user) return <Navigate to="/login" replace />
   if (!isAdmin) return <div style={{ padding: 24 }}>Access Denied</div>
@@ -29,24 +21,26 @@ const ProtectedRoute = ({ children }) => {
 const AppRouter = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/reading" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="reading" element={<Reading />} />
-          <Route path="listening" element={<Listening />} />
-          <Route path="vocabulary" element={<Vocabulary />} />
-          <Route path="students" element={<Students />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<div style={{ padding: 24 }}>Loading...</div>}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/reading" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="reading" element={<Reading />} />
+            <Route path="listening" element={<Listening />} />
+            <Route path="vocabulary" element={<Vocabulary />} />
+            <Route path="students" element={<Students />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

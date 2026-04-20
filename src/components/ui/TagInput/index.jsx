@@ -1,32 +1,46 @@
 import { useState } from 'react'
 import { InputField, Remove, Tag, Wrap } from './styles'
 
-const TagInput = ({ value = [], onChange }) => {
+const TagInput = ({ value = [], onChange, disabled = false, placeholder = 'Add tag' }) => {
   const [text, setText] = useState('')
+
   const addTag = () => {
+    if (disabled) return
+
     const tag = text.trim()
     if (!tag || value.includes(tag)) return
+
     onChange([...value, tag])
     setText('')
   }
+
   return (
-    <Wrap>
+    <Wrap disabled={disabled}>
       {value.map((tag) => (
         <Tag key={tag}>
           {tag}
-          <Remove onClick={() => onChange(value.filter((t) => t !== tag))}>×</Remove>
+          <Remove
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(value.filter((item) => item !== tag))}
+          >
+            x
+          </Remove>
         </Tag>
       ))}
       <InputField
+        disabled={disabled}
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
+        onChange={(event) => setText(event.target.value)}
+        onKeyDown={(event) => {
+          if (disabled) return
+
+          if (event.key === 'Enter') {
+            event.preventDefault()
             addTag()
           }
         }}
-        placeholder="Add tag"
+        placeholder={placeholder}
       />
     </Wrap>
   )

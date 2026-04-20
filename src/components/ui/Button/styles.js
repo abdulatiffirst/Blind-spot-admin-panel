@@ -10,6 +10,7 @@ const variantMap = {
     background: #fff;
     color: ${({ theme }) => theme.colors.text};
     border: 1px solid ${({ theme }) => theme.colors.border};
+    &:hover { background: #f3f4f6; }
   `,
   danger: css`
     background: ${({ theme }) => theme.colors.danger};
@@ -19,6 +20,7 @@ const variantMap = {
   ghost: css`
     background: transparent;
     color: ${({ theme }) => theme.colors.textSecondary};
+    &:hover { background: #f3f4f6; color: ${({ theme }) => theme.colors.text}; }
   `,
 }
 
@@ -36,6 +38,7 @@ export const StyledButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  justify-content: center;
   ${({ variant = 'primary' }) => variantMap[variant]}
   ${({ size = 'md' }) => sizeMap[size]}
   &:disabled { opacity: 0.55; cursor: not-allowed; }

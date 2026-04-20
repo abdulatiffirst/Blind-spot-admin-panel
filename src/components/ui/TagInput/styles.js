@@ -8,6 +8,7 @@ export const Wrap = styled.div`
   flex-wrap: wrap;
   gap: 8px;
   background: #fff;
+  opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
 `
 
 export const Tag = styled.span`
@@ -23,10 +24,12 @@ export const Remove = styled.button`
   border: none;
   background: transparent;
   cursor: pointer;
+  color: inherit;
 `
 
 export const InputField = styled.input`
   border: none;
   outline: none;
   min-width: 120px;
+  background: transparent;
 `

@@ -5,27 +5,20 @@ import {
   getPassages,
   updatePassage as updatePassageReq,
 } from '../firebase/firestore'
-import { agentLog } from '../debug/instrument.js'
 
 export const usePassages = (type) => {
   const [passages, setPassages] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
+    setError('')
     try {
       const data = await getPassages(type)
       setPassages(data)
     } catch (err) {
-      // #region agent log
-      agentLog({
-        runId: 'run1',
-        hypothesisId: 'H8',
-        location: 'src/hooks/usePassages.js:18',
-        message: 'getPassages failed',
-        data: { type, error: err?.message || String(err) },
-      })
-      // #endregion
+      setError(err.message || 'Failed to load passages.')
       setPassages([])
     } finally {
       setLoading(false)
@@ -33,7 +26,7 @@ export const usePassages = (type) => {
   }, [type])
 
   useEffect(() => {
-    load()
+    void load()
   }, [load])
 
   const addPassage = async (data) => {
@@ -51,5 +44,5 @@ export const usePassages = (type) => {
     await load()
   }
 
-  return { passages, loading, addPassage, updatePassage, deletePassage, reload: load }
+  return { passages, loading, error, addPassage, updatePassage, deletePassage, reload: load }
 }

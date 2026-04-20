@@ -15,6 +15,7 @@ export const StyledTable = styled.table`
     padding: 12px;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     font-size: 14px;
+    vertical-align: top;
   }
   tbody tr:hover { background: #f8fafc; }
 `

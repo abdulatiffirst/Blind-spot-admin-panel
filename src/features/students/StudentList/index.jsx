@@ -2,37 +2,83 @@ import { useEffect, useState } from 'react'
 import Button from '../../../components/ui/Button'
 import Table from '../../../components/ui/Table'
 import { deleteStudent, getStudents } from '../../../firebase/firestore'
-import { Wrap } from './styles'
+import { ErrorText, Header, Wrap } from './styles'
 
-const fmt = (v) => {
-  if (!v) return '-'
-  const d = v.toDate ? v.toDate() : new Date(v)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+const formatDate = (value) => {
+  if (!value) return '-'
+  const date = value.toDate ? value.toDate() : new Date(value)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 const StudentList = () => {
   const [students, setStudents] = useState([])
-  const load = async () => setStudents(await getStudents())
-  useEffect(() => { load() }, [])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const nextStudents = await getStudents()
+      setStudents(nextStudents)
+    } catch (err) {
+      setStudents([])
+      setError(err.message || 'Failed to load students.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
+
+  const handleDelete = async (studentId) => {
+    const confirmed = window.confirm('Delete this student?')
+    if (!confirmed) return
+
+    try {
+      await deleteStudent(studentId)
+      await load()
+      window.alert('Student deleted successfully.')
+    } catch (err) {
+      setError(err.message || 'Failed to delete student.')
+    }
+  }
+
   return (
     <Wrap>
-      <h1 style={{ margin: 0 }}>Students</h1>
-      <Table
-        columns={[
-          { key: 'email', label: 'Email' },
-          { key: 'registered', label: 'Registered Date' },
-        ]}
-        data={students.map((s) => ({ ...s, registered: fmt(s.createdAt) }))}
-        actions={(row) => (
-          <Button size="sm" variant="danger" onClick={async () => {
-            if (!window.confirm('Delete this student?')) return
-            await deleteStudent(row.id)
-            await load()
-          }}>
-            Delete
-          </Button>
-        )}
-      />
+      <Header>
+        <h1 style={{ margin: 0 }}>Students</h1>
+      </Header>
+
+      {error ? <ErrorText>{error}</ErrorText> : null}
+
+      {loading ? (
+        <p>Loading students...</p>
+      ) : (
+        <Table
+          columns={[
+            { key: 'email', label: 'Email' },
+            { key: 'registeredDate', label: 'Registered Date' },
+          ]}
+          data={students.map((student) => ({
+            ...student,
+            registeredDate: formatDate(student.createdAt),
+          }))}
+          emptyMessage="No students found."
+          actions={(row) => (
+            <Button size="sm" variant="danger" onClick={() => handleDelete(row.id)}>
+              Delete
+            </Button>
+          )}
+        />
+      )}
     </Wrap>
   )
 }
